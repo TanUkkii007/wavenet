@@ -85,7 +85,7 @@ class ModulesTest(tf.test.TestCase):
 
 
         H = condition_projection(X[:, 1:, :])
-        H = tf.zeros_like(H) # ToDo: remove this line
+        # H = tf.zeros_like(H) # ToDo: remove this line
 
         Y2, _ = probability_parameter_estimator((X[:, :-1, :], H))
 
@@ -93,7 +93,7 @@ class ModulesTest(tf.test.TestCase):
         X_prev = probability_parameter_estimator.zero_state(batch_size, n_classes, tf.float32)
         for t in range(width - probability_parameter_estimator.receptive_field):
             X_t = tf.expand_dims(X[:, t, :], axis=1)
-            H_t = tf.expand_dims(H[:, t+1, :], axis=1)
+            H_t = tf.expand_dims(H[:, t, :], axis=1)
             y1, X_prev = probability_parameter_estimator((X_t, H_t), state=X_prev, sequential_inference_mode=True)
             Y1.append(y1)
         Y1 = tf.squeeze(tf.stack(Y1, axis=1), axis=2)
