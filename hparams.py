@@ -34,7 +34,7 @@ hparams = tf.contrib.training.HParams(
     max_output_length=128000,
 
     # Training:
-    batch_size=32,
+    batch_size=2,
     adam_beta1=0.9,
     adam_beta2=0.999,
     adam_eps=1e-8,

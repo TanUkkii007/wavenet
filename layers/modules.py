@@ -78,10 +78,7 @@ class ResidualBlock(tf.layers.Layer):
         Y = tf.nn.tanh(Y[:, :, :self.residual_channels]) * tf.sigmoid(Y[:, :, self.residual_channels:])
 
         # skip signal
-        if output_width is None:
-            skip_output = Y
-        else:
-            skip_output = Y[:, :output_width, :]
+        skip_output = Y
 
         # output signal
         Z = tf.tensordot(Y, self.output_W, [[len(Y.shape.as_list()) - 1], [0]])  # 1x1 convolution

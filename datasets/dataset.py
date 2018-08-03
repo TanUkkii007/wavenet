@@ -15,6 +15,22 @@ class TargetData(
     pass
 
 
+def upsample_condition(condition, condition_length, times):
+    last_dim = tf.shape(condition)[1]
+    condition = tf.expand_dims(condition, 1)
+    condition = tf.tile(condition, multiples=tf.convert_to_tensor([1, 1, times]))
+    condition = tf.reshape(condition, shape=[-1, last_dim])
+    condition_length = condition_length * times
+    return condition, condition_length
+
+
+def pad_waveform(wav, wav_length, condition_length):
+    pad_length = condition_length - wav_length % condition_length
+    wav = tf.pad(wav, paddings=tf.convert_to_tensor([[0, pad_length], [0, 0]]))
+    wav_length = wav_length + pad_length
+    return wav, wav_length
+
+
 class DatasetSource:
 
     def __init__(self, dataset, hparams):
@@ -39,16 +55,20 @@ class DatasetSource:
 
     def make_source_and_target(self):
         def make_pair(d: PreprocessedData):
+            # ToDo: pad at the preprocessing time is more accurate
+            waveform, waveform_length = pad_waveform(tf.expand_dims(d.waveform, axis=1), d.waveform_length, d.mel_length)
+            times = waveform_length // d.mel_length
+            mel, mel_length = upsample_condition(d.mel, d.mel_length, times)
             source = SourceData(id=d.id,
                                 key=d.key,
-                                mel=d.mel,
-                                mel_length=d.mel_length,
+                                mel=mel,
+                                mel_length=mel_length,
                                 mel_width=d.mel_width,
                                 text=d.text)
             target = TargetData(id=d.id,
                                 key=d.key,
-                                waveform=tf.expand_dims(d.waveform, axis=1),
-                                waveform_length=d.waveform_length)
+                                waveform=waveform,
+                                waveform_length=waveform_length)
             return source, target
 
         zipped = self._decode_data().map(make_pair)
