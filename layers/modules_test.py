@@ -68,7 +68,6 @@ class ModulesTest(tf.test.TestCase):
     @settings(max_examples=10, suppress_health_check=[HealthCheck.filter_too_much], timeout=unlimited)
     def test_probability_parameter_estimator(self, args, out_channels, skip_channels, local_condition_dim):
         X, batch_size, n_classes, filter_width, width, dilations = args
-        # assume(n_classes - filter_width - out_channels - (filter_width - 1) * (dilations[-1] - 1) + 1 > 0)
         X = tf.one_hot(X, n_classes)
         width += filter_width - 1
 
@@ -85,7 +84,6 @@ class ModulesTest(tf.test.TestCase):
 
 
         H = condition_projection(X[:, 1:, :])
-        # H = tf.zeros_like(H) # ToDo: remove this line
 
         Y2, _ = probability_parameter_estimator((X[:, :-1, :], H))
 
