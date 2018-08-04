@@ -1,7 +1,8 @@
 import tensorflow as tf
 from layers.modules import ProbabilityParameterEstimator, ConditionProjection
-from ops.mixture_of_logistics_distribution import discretized_mix_logistic_loss
+from ops.mixture_of_logistics_distribution import discretized_mix_logistic_loss, sample_from_discretized_mix_logistic
 from ops.optimizers import get_learning_rate
+from models.hooks import MetricsSaver
 
 
 class WaveNetModel(tf.estimator.Estimator):
@@ -53,7 +54,14 @@ class WaveNetModel(tf.estimator.Estimator):
                 probability_params, _ = wavenet((X, H), sequential_inference_mode=False)
                 loss = discretized_mix_logistic_loss(Y, probability_params, params.quantization_levels,
                                                      params.n_logistic_mix)
-                return tf.estimator.EstimatorSpec(mode, loss=loss)
+                predicted_waveform = sample_from_discretized_mix_logistic(probability_params, params.n_logistic_mix)
+                summary_writer = tf.summary.FileWriter(model_dir)
+                metrics_saver = MetricsSaver(global_step, predicted_waveform, tf.squeeze(labels.waveform, axis=2),
+                                             features.key,
+                                             features.text,
+                                             1,
+                                             mode, params, summary_writer)
+                return tf.estimator.EstimatorSpec(mode, loss=loss, evaluation_hooks=[metrics_saver])
 
             if is_prediction:
                 # ToDo: implement prediction

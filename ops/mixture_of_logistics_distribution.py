@@ -56,3 +56,29 @@ def discretized_mix_logistic_loss(X, probability_params, quantization_levels, nr
         return -tf.reduce_mean(_log_sum_exp(log_probs))
     else:
         return -log_probs
+
+
+def sample_from_discretized_mix_logistic(probability_params, nr_mix):
+    p_shape = tf.shape(probability_params)
+    # unpack parameters
+    logit_probs = probability_params[:, :, :nr_mix]
+
+    # sample mixture indicator from softmax
+    index = tf.argmax(
+        logit_probs - tf.log(-tf.log(tf.random_uniform(shape=tf.shape(logit_probs), minval=1e-6, maxval=1.0 - 1e-6))),
+        axis=2)
+    index = tf.one_hot(index, depth=nr_mix, dtype=probability_params.dtype)
+
+    # select logistic parameters
+    means = probability_params[:, :, nr_mix:2 * nr_mix]
+    means = tf.reduce_sum(means * index, axis=-1)  # one hot selection and zero removal by reduce sum
+    log_scales = probability_params[:, :, 2 * nr_mix:3 * nr_mix]
+    log_scales = tf.reduce_sum(log_scales * index, axis=-1)  # one hot selection and zero removal by reduce sum
+    log_scales = tf.maximum(log_scales, -14.0)
+
+    # sample from logistic & clip to interval
+    # we don't actually round to the nearest 16bit value when sampling
+    u = tf.random_uniform(shape=tf.shape(means), minval=1e-5, maxval=1.0 - 1e-5)
+    x = means + tf.exp(log_scales) * (tf.log(u) - tf.log(1.0 - u))
+
+    return x
