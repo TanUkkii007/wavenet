@@ -30,7 +30,7 @@ def discretized_mix_logistic_loss(X, probability_params, quantization_levels, nr
     means = probability_params[:, :, nr_mix:2 * nr_mix]
     log_scales = tf.maximum(probability_params[:, :, 2 * nr_mix:3 * nr_mix], -14.0)
 
-    X = tf.expand_dims(X, axis=3) + tf.zeros((X_shape[0], X_shape[1], X_shape[2], nr_mix))
+    X = tf.tile(X, multiples=[1, 1, nr_mix])
     centered_X = X - means
     inv_stdv = tf.exp(-log_scales)
     plus_in = inv_stdv * (centered_X + 1. / q)
@@ -54,7 +54,7 @@ def discretized_mix_logistic_loss(X, probability_params, quantization_levels, nr
 
     log_probs = tf.where(X < min_threshold, log_cdf_plus,
                          tf.where(X > max_threshold, log_one_minus_cdf_min, tf.log(tf.maximum(cdf_delta, 1e-14))))
-    log_probs = tf.reduce_sum(log_probs, axis=2) + _log_prob_from_logits(logit_probs)
+    log_probs = log_probs + _log_prob_from_logits(logit_probs)
     if sum_all:
         return -tf.reduce_mean(_log_sum_exp(log_probs))
     else:
