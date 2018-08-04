@@ -17,8 +17,7 @@ class Audio:
         return librosa.core.load(path, sr=self.hparams.sample_rate)[0]
 
     def save_wav(self, wav, path):
-        wav = wav * 32767 / max(0.01, np.max(np.abs(wav)))
-        scipy.io.wavfile.write(path, self.hparams.sample_rate, wav.astype(np.int16))
+        librosa.output.write_wav(path, wav, self.hparams.sample_rate)
 
     def spectrogram(self, y):
         D = self._stft(y)

@@ -15,6 +15,12 @@ class TargetData(
     pass
 
 
+class SourceDataForPrediction(namedtuple("SourceDataForPrediction",
+                                         ["id", "key", "mel", "mel_length", "mel_width", "text", "waveform",
+                                          "waveform_length"])):
+    pass
+
+
 def upsample_condition(condition, condition_length, times):
     last_dim = tf.shape(condition)[1]
     condition = tf.expand_dims(condition, 1)
@@ -56,7 +62,8 @@ class DatasetSource:
     def make_source_and_target(self):
         def make_pair(d: PreprocessedData):
             # ToDo: pad at the preprocessing time is more accurate
-            waveform, waveform_length = pad_waveform(tf.expand_dims(d.waveform, axis=1), d.waveform_length, d.mel_length)
+            waveform, waveform_length = pad_waveform(tf.expand_dims(d.waveform, axis=1), d.waveform_length,
+                                                     d.mel_length)
             times = waveform_length // d.mel_length
             mel, mel_length = upsample_condition(d.mel, d.mel_length, times)
             source = SourceData(id=d.id,
@@ -187,7 +194,7 @@ class BatchedDataset(DatasetBase):
         self._hparams = hparams
 
     def apply(self, dataset, hparams):
-        return BatchedDataset(self.dataset, self.hparams)
+        return BatchedDataset(dataset, hparams)
 
     @property
     def dataset(self):
@@ -199,3 +206,18 @@ class BatchedDataset(DatasetBase):
 
     def prefetch(self, buffer_size):
         return self.apply(self.dataset.prefetch(buffer_size), self.hparams)
+
+    def arrange_for_prediction(self):
+        def convert(s: SourceData, t: TargetData):
+            return SourceDataForPrediction(
+                id=s.id,
+                key=s.key,
+                mel=s.mel,
+                mel_length=s.mel_length,
+                mel_width=s.mel_width,
+                text=s.text,
+                waveform=t.waveform,
+                waveform_length=t.waveform_length,
+            ), t
+
+        return self.apply(self.dataset.map(convert), self.hparams)

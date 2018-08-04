@@ -3,6 +3,7 @@ from functools import reduce
 from collections import namedtuple
 from ops.convolutions import causal_conv_via_matmul, initial_X_prev
 from ops.ops import concat_relu
+from ops.mixture_of_logistics_distribution import sample_from_discretized_mix_logistic
 
 
 class CausalConvolution(tf.layers.Layer):
@@ -262,3 +263,39 @@ class ProbabilityParameterEstimator(tf.layers.Layer):
         receptive_field = (self.filter_width - 1) * sum(self.dilations) + 1  # due to dilation layers
         receptive_field += self.filter_width - 1  # due to causal layer
         return receptive_field
+
+
+class SampleGenerationLoopState(
+    namedtuple("SampleGenerationLoopState", ["t", "output_audio_ta", "audio_t", "state_t"])):
+    pass
+
+
+def generate_samples(probability_estimator: ProbabilityParameterEstimator, conditions, nr_mix):
+    batch_size = tf.shape(conditions)[0]
+    n_total_samples = tf.shape(conditions)[1]
+
+    def loop_condition(t, unused_output_audio_ta, unused_audio_t, unused_state_t):
+        return tf.less(t, n_total_samples)
+
+    def loop_body(t, output_audio_ta, audio_t, state_t):
+        H = tf.expand_dims(conditions[:, t, :], axis=1)
+        audio_t = tf.expand_dims(audio_t, axis=2)
+        probability_params, next_state = probability_estimator((audio_t, H), state=state_t,
+                                                               sequential_inference_mode=True)
+        x = sample_from_discretized_mix_logistic(probability_params, nr_mix)
+        output_audio_ta = output_audio_ta.write(t, x)
+        return SampleGenerationLoopState(t + 1, output_audio_ta, x, next_state)
+
+    initial_vars = SampleGenerationLoopState(
+        t=tf.constant(0, dtype=tf.int32),
+        output_audio_ta=tf.TensorArray(dtype=conditions.dtype, size=0, dynamic_size=True),
+        audio_t=tf.zeros(shape=[batch_size, 1], dtype=conditions.dtype),
+        state_t=probability_estimator.zero_state(batch_size=batch_size,
+                                                 in_channels=1, dtype=conditions.dtype)
+    )
+
+    results = tf.while_loop(loop_condition, loop_body, loop_vars=initial_vars,
+                            parallel_iterations=1, back_prop=False)
+
+    output_waveform = tf.transpose(results.output_audio_ta.stack(), perm=[1, 0, 2])
+    return tf.squeeze(output_waveform, axis=2)

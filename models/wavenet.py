@@ -1,5 +1,5 @@
 import tensorflow as tf
-from layers.modules import ProbabilityParameterEstimator, ConditionProjection
+from layers.modules import ProbabilityParameterEstimator, ConditionProjection, generate_samples
 from ops.mixture_of_logistics_distribution import discretized_mix_logistic_loss, sample_from_discretized_mix_logistic
 from ops.optimizers import get_learning_rate
 from models.hooks import MetricsSaver
@@ -24,8 +24,6 @@ class WaveNetModel(tf.estimator.Estimator):
                 params.use_causal_conv_bias, params.use_filter_gate_bias, params.use_output_bias,
                 params.use_skip_bias, params.use_postprocessing1_bias, params.use_postprocessing2_bias)
 
-            X = labels.waveform[:, :-1]  # input
-            Y = labels.waveform[:, 1:]  # target
             local_condition = features.mel[:, 1:, :]
 
             global_condition = features.global_condition[:, 1:] if params.use_global_condition else None
@@ -35,6 +33,8 @@ class WaveNetModel(tf.estimator.Estimator):
             global_step = tf.train.get_global_step()
 
             if is_training:
+                X = labels.waveform[:, :-1]  # input
+                Y = labels.waveform[:, 1:]  # target
                 probability_params, _ = wavenet((X, H), sequential_inference_mode=False)
                 loss = discretized_mix_logistic_loss(Y, probability_params, params.quantization_levels,
                                                      params.n_logistic_mix)
@@ -52,6 +52,8 @@ class WaveNetModel(tf.estimator.Estimator):
                 return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
             if is_validation:
+                X = labels.waveform[:, :-1]  # input
+                Y = labels.waveform[:, 1:]  # target
                 probability_params, _ = wavenet((X, H), sequential_inference_mode=False)
                 loss = discretized_mix_logistic_loss(Y, probability_params, params.quantization_levels,
                                                      params.n_logistic_mix)
@@ -65,10 +67,12 @@ class WaveNetModel(tf.estimator.Estimator):
                 return tf.estimator.EstimatorSpec(mode, loss=loss, evaluation_hooks=[metrics_saver])
 
             if is_prediction:
-                # ToDo: implement prediction
+                predicted_waveform = generate_samples(wavenet, H, params.n_logistic_mix)
                 return tf.estimator.EstimatorSpec(mode, predictions={
                     "id": features.id,
                     "key": features.key,
+                    "predicted_waveform": predicted_waveform,
+                    "ground_truth_waveform": tf.squeeze(features.waveform, axis=2),
                     "mel": features.mel,
                     "text": features.text,
                 })

@@ -17,7 +17,10 @@ def _log_prob_from_logits(x):
 
 
 def discretized_mix_logistic_loss(X, probability_params, quantization_levels, nr_mix, sum_all=True):
-    """ log-likelihood for mixture of discretized logistics, assumes the data has been rescaled to [-1,1] interval """
+    """
+    log-likelihood for mixture of discretized logistics, assumes the data has been rescaled to [-1,1] interval
+    Reference: https://github.com/openai/pixel-cnn/blob/2b03725126c580a07af47c498d456cec17a9735e/pixel_cnn_pp/nn.py#L46
+    """
     q = quantization_levels - 1.0
     half_q = q / 2.0
 
@@ -59,7 +62,9 @@ def discretized_mix_logistic_loss(X, probability_params, quantization_levels, nr
 
 
 def sample_from_discretized_mix_logistic(probability_params, nr_mix):
-    p_shape = tf.shape(probability_params)
+    """
+    Reference: https://github.com/openai/pixel-cnn/blob/2b03725126c580a07af47c498d456cec17a9735e/pixel_cnn_pp/nn.py#L89
+    """
     # unpack parameters
     logit_probs = probability_params[:, :, :nr_mix]
 

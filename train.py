@@ -3,7 +3,7 @@ Usage: train.py [options]
 
 Options:
     --data-root=<dir>              Directory contains preprocessed features.
-    --checkpoint-dir=<dir>         Directory where to save model checkpoints [default: checkpoints].
+    --checkpoint-dir=<dir>         Directory where to save model checkpoints.
     --hparams=<parmas>             Hyper parameters. [default: ].
     --dataset=<name>               Dataset name.
     --training-list-file=<path>    Dataset file list for training.
