@@ -48,6 +48,7 @@ class WaveNetModel(tf.estimator.Estimator):
                 gradients, variables = zip(*optimizer.compute_gradients(loss))
                 clipped_gradients, _ = tf.clip_by_global_norm(gradients, 1.0)
                 train_op = optimizer.apply_gradients(zip(clipped_gradients, variables), global_step=global_step)
+                self.add_training_stats(lr)
                 return tf.estimator.EstimatorSpec(mode, loss=loss, train_op=train_op)
 
             if is_validation:
@@ -75,3 +76,8 @@ class WaveNetModel(tf.estimator.Estimator):
         super(WaveNetModel, self).__init__(
             model_fn=model_fn, model_dir=model_dir, config=config,
             params=params, warm_start_from=warm_start_from)
+
+    @staticmethod
+    def add_training_stats(learning_rate):
+        tf.summary.scalar("learning_rate", learning_rate)
+        return tf.summary.merge_all()
