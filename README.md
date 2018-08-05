@@ -1,4 +1,4 @@
-# WaveNet
+# WaveNet [![CircleCI](https://circleci.com/gh/TanUkkii007/wavenet.svg?style=svg)](https://circleci.com/gh/TanUkkii007/wavenet)
 
 An implementation of WaveNet: A Generative Model for Raw Audio https://arxiv.org/abs/1609.03499 .
 
