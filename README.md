@@ -13,7 +13,7 @@ This project rewrote codes of the lecture with following criteria:
 This project has following limitations.
 
 - Supported data set is [LJSpeech](https://keithito.com/LJ-Speech-Dataset) only
-- No sophisticated initialization, optimization and regularization techniques
+- No sophisticated initialization, optimization and regularization techniques that was in the lecture
 - Lack of hyper-parameter tuning.
 - Confirmed generated audio are low quality
 
@@ -21,6 +21,8 @@ For research-ready implementations, please refer to
 
 - [CURRENNT_MODIFIED](https://github.com/TonyWangX/CURRENNT_MODIFIED)
 
+
+This implementation was tested with Tesla K20c (4.94GiB GPU memory).
 
 # Installing dependencies
 
@@ -70,7 +72,7 @@ You can see training and validation losses in a log file and on `tensorboard`.
 tensorboard --logdir=/path/to/checkpoint/dir
 ```
 
-![training and validation loss on tensorboard](./docs/Screen Shot 2018-08-05 at 16.35.41.png)
+![training and validation loss on tensorboard](./docs/Screen\ Shot\ 2018-08-05\ at\ 16.35.41.png)
 
 At validation time, predicted waveforms with teacher forcing are generated as images in the checkpoint directory.
 

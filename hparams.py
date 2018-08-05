@@ -20,7 +20,6 @@ hparams = tf.contrib.training.HParams(
     filter_width=3,
     residual_channels=64,
     dilations=[1,2,4,8,16,32,64,128,256,512,
-               1,2,4,8,16,32,64,128,256,512,
                1,2,4,8,16,32,64,128,256,512],
     skip_channels=128,
     out_channels=3*15,  # 3*n_logistic_mix
@@ -31,10 +30,10 @@ hparams = tf.contrib.training.HParams(
     use_postprocessing1_bias=True,
     use_postprocessing2_bias=True,
 
-    max_output_length=128000,
+    max_output_length=80000,
 
     # Training:
-    batch_size=2,
+    batch_size=1,
     adam_beta1=0.9,
     adam_beta2=0.999,
     adam_eps=1e-8,
