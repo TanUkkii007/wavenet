@@ -1,0 +1,32 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/wavenet
+    docker:
+      - image: circleci/python:3.6.4
+    steps:
+      - checkout
+      - run: sudo chown -R circleci:circleci /usr/local/bin
+      - run: sudo chown -R circleci:circleci /usr/local/lib/python3.6/site-packages
+      - run: sudo chown -R circleci:circleci /usr/local/man
+      - restore_cache:
+          key: deps9-{{ .Branch }}-{{ checksum "setup.py" }}
+      - run:
+          command: |
+            sudo pip3 install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.9.0-cp36-cp36m-linux_x86_64.whl
+            sudo pip install hypothesis
+      - save_cache:
+          key: deps9-{{ .Branch }}-{{ checksum "setup.py" }}
+          paths:
+            - "/usr/local/bin"
+            - "/usr/local/lib/python3.6/site-packages"
+      - run:
+          command: |
+            python -m unittest ops/convolutions_test.py &&\
+            python -m unittest layers/modules_test.py
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
+          destination: tr1
+
