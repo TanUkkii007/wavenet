@@ -8,7 +8,7 @@ Options:
     --dataset=<name>               Dataset name.
     --training-list-file=<path>    Dataset file list for training.
     --validation-list-file=<path>  Dataset file list for validation.
-    --checkpoint=<path>            Restore model from checkpoint path if given.
+    --log-file=<path>              Log file path.
     -h, --help                     Show this help message and exit
 """
 
@@ -16,6 +16,7 @@ from docopt import docopt
 import tensorflow as tf
 from random import shuffle
 import os
+import logging
 from multiprocessing import cpu_count
 from datasets.dataset import DatasetSource
 from models.wavenet import WaveNetModel
@@ -81,9 +82,22 @@ def main():
     dataset_name = args["--dataset"]
     training_list_file = args["--training-list-file"]
     validation_list_file = args["--validation-list-file"]
+    log_file = args["--log-file"]
 
     hparams.parse(args["--hparams"])
-    print(hparams_debug_string())
+
+    if log_file is not None:
+        log = logging.getLogger("tensorflow")
+        log.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        fh = logging.FileHandler(log_file)
+        fh.setLevel(logging.INFO)
+        fh.setFormatter(formatter)
+        log.addHandler(fh)
+
+    tf.logging.set_verbosity(tf.logging.INFO)
+
+    tf.logging.info(hparams_debug_string())
 
     training_list = list(load_key_list(training_list_file))
     validation_list = list(load_key_list(validation_list_file))

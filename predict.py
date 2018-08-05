@@ -51,11 +51,14 @@ def predict(hparams,
         key = v.key.decode('utf-8')
         audio_filename = f"{key}.wav"
         audio_filepath = os.path.join(output_dir, audio_filename)
+        tf.logging.info(f"Saving {audio_filepath}")
         audio.save_wav(v.predicted_waveform, audio_filepath)
         png_filename = f"{key}.png"
         png_filepath = os.path.join(output_dir, png_filename)
+        tf.logging.info(f"Saving {png_filepath}")
         # ToDo: pass global step
-        plot_wav(png_filepath, v.predicted_waveform, v.ground_truth_waveform, key, 0, v.text, hparams.sample_rate)
+        plot_wav(png_filepath, v.predicted_waveform, v.ground_truth_waveform, key, 0, v.text.decode('utf-8'),
+                 hparams.sample_rate)
 
 
 def load_key_list(path):
