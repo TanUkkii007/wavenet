@@ -2,7 +2,7 @@ import tensorflow as tf
 from functools import reduce
 from collections import namedtuple
 from ops.convolutions import causal_conv_via_matmul, initial_X_prev
-from ops.ops import concat_relu
+from ops.nonlinearity import concat_relu
 from ops.mixture_of_logistics_distribution import sample_from_discretized_mix_logistic
 
 
@@ -68,7 +68,7 @@ class ResidualBlock(tf.layers.Layer):
 
         self.built = True
 
-    def call(self, inputs, state=None, sequential_inference_mode=False, output_width=None):
+    def call(self, inputs, state=None, sequential_inference_mode=False):
         block_input, condition = inputs
         Y, Y_state = self.gate_convolution(block_input, state=state,
                                            sequential_inference_mode=sequential_inference_mode)
@@ -224,10 +224,6 @@ class ProbabilityParameterEstimator(tf.layers.Layer):
 
         X, H = inputs
 
-        input_width = tf.shape(X)[1]
-        padding_width = self.filter_width - 1
-        output_width = input_width + padding_width - self.receptive_field + 1 if not sequential_inference_mode else None
-
         # causal layer
         X, causal_layer_state = self.causal_layer(X, state=state.causal_layer_state,
                                                   sequential_inference_mode=sequential_inference_mode)
@@ -235,16 +231,14 @@ class ProbabilityParameterEstimator(tf.layers.Layer):
         # Residual blocks
         def residual_block(acc, dilation_layer_state):
             dilation, residual_block_layer, residual_block_state = dilation_layer_state
-            j, X, skip_outputs, next_block_states = acc
-            h = H if sequential_inference_mode else H
-            X, skip_output, next_block_state = residual_block_layer((X, h), state=residual_block_state,
-                                                                    sequential_inference_mode=sequential_inference_mode,
-                                                                    output_width=output_width)
-            return j, X, skip_outputs + [skip_output], next_block_states + [next_block_state]
+            X, skip_outputs, next_block_states = acc
+            X, skip_output, next_block_state = residual_block_layer((X, H), state=residual_block_state,
+                                                                    sequential_inference_mode=sequential_inference_mode)
+            return X, skip_outputs + [skip_output], next_block_states + [next_block_state]
 
-        initial = (self.filter_width - 1, X, [], [])
-        j, X, skip_outputs, block_states = reduce(residual_block, zip(self.dilations, self.residual_blocks,
-                                                                      state.residual_block_states), initial)
+        initial = (X, [], [])
+        X, skip_outputs, block_states = reduce(residual_block, zip(self.dilations, self.residual_blocks,
+                                                                   state.residual_block_states), initial)
 
         next_state = ProbabilityParameterEstimatorState(causal_layer_state, block_states)
 

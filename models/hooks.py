@@ -34,8 +34,8 @@ class MetricsSaver(tf.train.SessionRunHook):
             for key, text, predicted_audio, ground_truth_audio in zip(keys, texts, predicted_audios,
                                                                       ground_truth_audios):
                 output_filename = "{}_result_step{:09d}_{}.png".format(self.mode,
-                                                                         global_step_value, key.decode('utf-8'))
+                                                                       global_step_value, key.decode('utf-8'))
                 output_path = os.path.join(self.writer.get_logdir(), "audio_" + output_filename)
                 tf.logging.info("Saving a %s result for %d at %s", self.mode, global_step_value, output_path)
-                plot_wav(output_path, predicted_audio, ground_truth_audio, key, global_step_value, text.decode('utf-8'),
-                         self.hparams.sample_rate)
+                plot_wav(output_path, predicted_audio, ground_truth_audio, key.decode('utf-8'), global_step_value,
+                         text.decode('utf-8'), self.hparams.sample_rate)
