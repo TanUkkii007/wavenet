@@ -10,7 +10,7 @@ jobs:
       - run: sudo chown -R circleci:circleci /usr/local/lib/python3.6/site-packages
       - run: sudo chown -R circleci:circleci /usr/local/man
       - restore_cache:
-          key: deps9-{{ .Branch }}-{{ checksum "setup.py" }}
+          key: deps9-{{ .Branch }}-{{ checksum "environment.yml" }}
       - run:
           command: |
             sudo pip3 install --upgrade https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-1.9.0-cp36-cp36m-linux_x86_64.whl
