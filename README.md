@@ -72,7 +72,7 @@ You can see training and validation losses in a log file and on `tensorboard`.
 tensorboard --logdir=/path/to/checkpoint/dir
 ```
 
-![training and validation loss on tensorboard](./docs/Screen Shot_2018-08-05_at_16.35.41.png)
+![training and validation loss on tensorboard](./docs/Screen_Shot_2018-08-05_at_16.35.41.png)
 
 At validation time, predicted waveforms with teacher forcing are generated as images in the checkpoint directory.
 
