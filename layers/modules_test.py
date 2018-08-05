@@ -69,7 +69,6 @@ class ModulesTest(tf.test.TestCase):
     def test_probability_parameter_estimator(self, args, out_channels, skip_channels, local_condition_dim):
         X, batch_size, n_classes, filter_width, width, dilations = args
         X = tf.one_hot(X, n_classes)
-        width += filter_width - 1
 
         local_condition_dim = n_classes  # ToDo: remove
         condition_projection = ConditionProjection(n_classes, local_condition_dim)
@@ -89,7 +88,7 @@ class ModulesTest(tf.test.TestCase):
 
         Y1 = []
         X_prev = probability_parameter_estimator.zero_state(batch_size, n_classes, tf.float32)
-        for t in range(width - probability_parameter_estimator.receptive_field):
+        for t in range(width-1):
             X_t = tf.expand_dims(X[:, t, :], axis=1)
             H_t = tf.expand_dims(H[:, t, :], axis=1)
             y1, X_prev = probability_parameter_estimator((X_t, H_t), state=X_prev, sequential_inference_mode=True)
